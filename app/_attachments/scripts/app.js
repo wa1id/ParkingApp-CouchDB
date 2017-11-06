@@ -25,12 +25,17 @@ angular.module('parkingApp', ['ngRoute'])
 			//console.log(data);
 			var lat = parseFloat(data.data[0].lat); //data.data[0].lat check with console.log(data) and look how to get to your data
 			var lon = parseFloat(data.data[0].lon);
-			var zones = saveSrv.getObject('zones');
-			
+			var zones = saveSrv.getObject('zones'); //get zones from localstorage, because we already saved it once
+
 			if (Object.keys(zones).length == 0) { //If there is nothing locally saved
 				zoneSrv.getZones().then(function(data) {
 					//console.log(data);
+					zones = data;
+					saveSrv.setObject('zones', data); //saves the data locally, don't need to GET from internet anymore but locally
+					$scope.color = zoneSrv.getTariff(lon, lat, zones.data);
 				});
+			} else {
+				$scope.color = zoneSrv.getTariff(lon, lat, zones.data); //not stored locally
 			}
 			
 		});
@@ -104,6 +109,16 @@ angular.module('parkingApp', ['ngRoute'])
             lastPoint = point;
         }
         return isInside;
+    };
+    
+    this.getTariff = function(lng, lat, zones) {
+    	for (var i = 0; i < zones.length; i++) { //Go through the whole zones array
+    		var geo = JSON.parse(zones[i].geometry); //get geometry (lat longs of that zone)
+    		var coords = geo.coordinates[0];
+    		if (this.inPolygon([lng, lat], coords)) {
+    			return zones[i].tariefkleur;
+    		}
+    	}
     };
 })
 
