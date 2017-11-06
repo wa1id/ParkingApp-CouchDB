@@ -130,7 +130,7 @@ angular.module('parkingApp', ['ngRoute'])
 	  this.setObject = function(key, value){
 		  $window.localStorage[key] = JSON.stringify(value);
 		  //Save in CouchDB
-		  //$http.put('../../' + key, value);
+		  $http.put('../../' + key, value);
 	  };
 	  
 	  this.getObject = function(key){
