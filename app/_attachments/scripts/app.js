@@ -13,7 +13,7 @@ angular.module('parkingApp', ['ngRoute'])
           });
 })
 
-.controller('homeCtrl', function($scope, addressSrv) {
+.controller('homeCtrl', function($scope, addressSrv, zoneSrv, saveSrv) {
 	
 	$('#searchButton').on('click', function(e) { //make onClick in code, not in HTML
 		
@@ -23,10 +23,16 @@ angular.module('parkingApp', ['ngRoute'])
 		
 		addressSrv.getCoordinates(address).then(function(data) {
 			//console.log(data);
-			var lat = parseFloat(data.data[0].lat);
+			var lat = parseFloat(data.data[0].lat); //data.data[0].lat check with console.log(data) and look how to get to your data
 			var lon = parseFloat(data.data[0].lon);
-			console.log(lat);
-			console.log(lon);
+			var zones = saveSrv.getObject('zones');
+			
+			if (Object.keys(zones).length == 0) { //If there is nothing locally saved
+				zoneSrv.getZones().then(function(data) {
+					//console.log(data);
+				});
+			}
+			
 		});
 	});
 	
@@ -47,5 +53,71 @@ angular.module('parkingApp', ['ngRoute'])
 		
 		return q.promise;
 	}
+})
+
+.service('zoneSrv', function($http, $q) {
+	this.getZones = function() {
+		var q = $q.defer();
+		$http.get('http://datasets.antwerpen.be/v4/gis/paparkeertariefzones.json')
+			.then(function(data, status, headers, config) {
+				q.resolve(data.data); //data.data because when you look at the json data of the GET url it has 'paging' and 'data'. We only want 'data'
+			}, function error(err) {
+				q.reject(err);
+			});
+		return q.promise;
+	}
+	
+	this.inPolygon = function(location, polyLoc){
+        var lastPoint = polyLoc[polyLoc.length-1];
+        var isInside = false;
+        var x = location[0];
+
+        for(var i = 0; i < polyLoc.length; i++){
+            var point = polyLoc[i];
+            var x1 = lastPoint[0];
+            var x2 = point[0];
+            var dx = x2 - x1;
+
+            if(Math.abs(dx) > 180.0){
+                if(x > 0){
+                    while(x1 < 0)
+                        x1 += 360;
+                    while(x2 < 0)
+                        x2 += 360;
+                }
+                else{
+                    while(x1 > 0)
+                        x1 -= 360;
+                    while(x2 > 0)
+                        x2 -= 360;
+                }
+                dx = x2 - x1;
+            }
+
+            if((x1 <= x && x2 > x) || (x1 >= x && x2 < x)){
+                var grad = (point[1] - lastPoint[1]) / dx;
+                var intersectAtLat = lastPoint[1] + ((x - x1) * grad);
+
+                if(intersectAtLat > location[1])
+                    isInside = !isInside;
+            }
+            lastPoint = point;
+        }
+        return isInside;
+    };
+})
+
+.service('saveSrv', function($window, $http){
+	  this.setObject = function(key, value){
+		  $window.localStorage[key] = JSON.stringify(value);
+		  //Save in CouchDB
+		  //$http.put('../../' + key, value);
+	  };
+	  
+	  this.getObject = function(key){
+		  return JSON.parse($window.localStorage[key] || '{}');
+	  };
 });
+
+
 	
