@@ -113,7 +113,7 @@ angular.module('parkingApp', ['ngRoute'])
             lastPoint = point;
         }
         return isInside;
-    };
+    }
     
     this.getTariff = function(lng, lat, zones) {
     	for (var i = 0; i < zones.length; i++) { //Go through the whole zones array
@@ -123,7 +123,7 @@ angular.module('parkingApp', ['ngRoute'])
     			return zones[i];
     		}
     	}
-    };
+    }
 })
 
 .service('saveSrv', function($window, $http){
