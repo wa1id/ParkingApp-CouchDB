@@ -17,7 +17,7 @@ angular.module('parkingApp', ['ngRoute'])
 	
 	$('#searchButton').on('click', function(e) { //make onClick in code, not in HTML
 		
-		$scope.color = ''; //what if I don't put this here?
+		$scope.color = '';
 		
 		var address = $('#addressText').val();
 		
