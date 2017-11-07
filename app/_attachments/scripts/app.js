@@ -32,14 +32,14 @@ angular.module('parkingApp', ['ngRoute'])
 					//console.log(data);
 					zones = data;
 					saveSrv.setObject('zones', data); //saves the data locally, don't need to GET from internet anymore but locally
-					$scope.color = zoneSrv.getTariff(lon, lat, zones.data).tariefkleur;
-					$scope.starttarief = zoneSrv.getTariff(lon, lat, zones.data).starttarief;
-					$scope.uur = zoneSrv.getTariff(lon, lat, zones.data).uurregeling;
+					$scope.color = zoneSrv.getInZone(lon, lat, zones.data);
+					//$scope.starttarief = zoneSrv.getTariff(lon, lat, zones.data).starttarief;
+					//$scope.uur = zoneSrv.getTariff(lon, lat, zones.data).uurregeling;
 				});
 			} else {
-				$scope.color = zoneSrv.getTariff(lon, lat, zones.data).tariefkleur; //not stored locally
-				$scope.starttarief = zoneSrv.getTariff(lon, lat, zones.data).starttarief;
-				$scope.uur = zoneSrv.getTariff(lon, lat, zones.data).uurregeling;
+				$scope.color = zoneSrv.getInZone(lon, lat, zones.data); //not stored locally
+				//$scope.starttarief = zoneSrv.getTariff(lon, lat, zones.data).starttarief;
+				//$scope.uur = zoneSrv.getTariff(lon, lat, zones.data).uurregeling;
 			}
 			
 		});
@@ -67,7 +67,7 @@ angular.module('parkingApp', ['ngRoute'])
 .service('zoneSrv', function($http, $q) {
 	this.getZones = function() {
 		var q = $q.defer();
-		$http.get('http://datasets.antwerpen.be/v4/gis/paparkeertariefzones.json')
+		$http.get('http://datasets.antwerpen.be/v4/gis/lezafbakening.json')
 			.then(function(data, status, headers, config) {
 				q.resolve(data.data); //data.data because when you look at the json data of the GET url it has 'paging' and 'data'. We only want 'data'
 			}, function error(err) {
@@ -120,9 +120,23 @@ angular.module('parkingApp', ['ngRoute'])
     		var geo = JSON.parse(zones[i].geometry); //get geometry (lat longs of that zone)
     		var coords = geo.coordinates[0];
     		if (this.inPolygon([lng, lat], coords)) {
+    			
     			return zones[i];
     		}
     	}
+    };
+    var inZone;
+    this.getInZone = function(lng, lat, zones) {
+    	for (var i = 0; i < zones.length; i++) { //Go through the whole zones array
+    		var geo = JSON.parse(zones[i].geometry); //get geometry (lat longs of that zone)
+    		var coords = geo.coordinates[0];
+    		inZone = false;
+    		if (this.inPolygon([lng, lat], coords)) {
+    			inZone = true;
+    			return inZone;
+    		}
+    	}
+    	return inZone;
     };
 })
 
